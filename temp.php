@@ -1,9 +1,4 @@
-<?php
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-	ini_set('display_startup_errors', 1);
-	error_reporting(E_ALL);
-	
+<?php	
 	class login_attempt
 	{
 
@@ -50,11 +45,11 @@
 				mysqli_select_db($connection,'prevent_brute_force');
 				$uname = $this->username;
 				$ip_addr = $_SERVER['REMOTE_ADDR'];
-				$query = "insert into login_attempt_queue(ip_address, username) values ($_SERVER['REMOTE_ADDR'],'$this->username')";
+				$query = "insert into login_attempt_queue(ip_address, username) values ('$ip_addr','$this->username')";
 
-				$query_result = mysqli_query($connection, $query) or die(mysqli_error($connection)); // dies when ip address already exists
+				$query_result = mysqli_query($connection, $query) or die(mysqli_error($connection));
 
-				$query = "select id from login_attempt_queue where ip_address=$_SERVER['REMOTE_ADDR']";
+				$query = "select id from login_attempt_queue where ip_address='$ip_addr'";
 				$query_result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
 				$data = mysqli_fetch_array($query_result, MYSQLI_ASSOC);
@@ -73,7 +68,7 @@
 			else
 			{
 				mysqli_select_db($connection,'prevent_brute_force');
-				$query = "select count(*) as overall, count(if(username=$this->username,true,NULL)) as user from login_attempt_queue where last_checked > NOW() - INTERVAL $attempt_expiration_timeout*1000 MICROSECOND";
+				$query = "select count(*) as overall, count(if(username='$this->username',true,NULL)) as user from login_attempt_queue where last_checked > NOW() - INTERVAL $attempt_expiration_timeout*1000 MICROSECOND";
 				$query_result = mysqli_query($connection,$query);
 
 				$row = mysqli_fetch_array($query_result,MYSQLI_ASSOC);
@@ -134,7 +129,7 @@
 
 				usleep($attempt_delay*1000);
 
-				$query = 'delete from login_attempt_queue where id = $this->attempt_id or last_checked < now() - interval $attempt_expiration_timeout*1000';
+				$query = "delete from login_attempt_queue where id = $this->attempt_id or last_checked < now() - interval $attempt_expiration_timeout*1000";
 				$query_result = mysqli_query($connection,$query);
 			}
 
@@ -153,7 +148,7 @@
 
 	if((!empty($_POST["username"])) && (!empty($_POST["password"])))
 	{
-		echo "checking";
+		// echo "checking";
 		try
 		{
 			$attempt = new login_attempt($_POST['username'],$_POST['password']);
