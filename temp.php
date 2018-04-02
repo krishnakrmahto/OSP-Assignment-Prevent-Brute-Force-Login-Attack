@@ -2,15 +2,15 @@
 	class login_attempt
 	{
 
-		private $attempt_delay = 1000;
+		// const 1000 = 1000;
 
 
-		private $attempt_expiration_timeout = 5000;
+		// const 5000 = 5000;
 
 
-		private $max_queued_attempts_per_user = 5;
+		// const 5 = 5;
 
-		private $max_queued_attempts_overall = 30;
+		// const 30 = 30;
 
 		private $attempt_id;
 
@@ -37,7 +37,7 @@
 
 		private function addToQueue()
 		{
-			$connection = mysqli_connect('localhost','root');
+			$connection = mysqli_connect('localhost','root',"pITAJI*143");
 			if(!$connection)
 				echo "Connection to database server failed";
 			else
@@ -52,8 +52,9 @@
 				$query = "select id from login_attempt_queue where ip_address='$ip_addr'";
 				$query_result = mysqli_query($connection,$query) or die(mysqli_error($connection));
 
-				$data = mysqli_fetch_array($query_result, MYSQLI_ASSOC);
+				$data = mysqli_fetch_assoc($query_result);
 				$this->attempt_id = $data['id'];
+				// echo "$this->attempt_id";
 
 				mysqli_close($connection);
 			}
@@ -62,23 +63,31 @@
 
 		private function isQueueSizeExceeded()
 		{
-			$connection = mysqli_connect("localhost","root");
+			$connection = mysqli_connect("localhost","root","pITAJI*143");
 			if(!$connection)
 				echo "Connection to the database server failed!";
 			else
 			{
 				mysqli_select_db($connection,'prevent_brute_force');
-				$query = "select count(*) as overall, count(if(username='$this->username',true,NULL)) as user from login_attempt_queue where last_checked > NOW() - INTERVAL $attempt_expiration_timeout*1000 MICROSECOND";
+				$query = "select count(*) as overall, count(if(username='$this->username',true,NULL)) as user from login_attempt_queue where last_checked > NOW() - INTERVAL 5000*1000 MICROSECOND";
 				$query_result = mysqli_query($connection,$query);
 
-				$row = mysqli_fetch_array($query_result,MYSQLI_ASSOC);
-				if($row['overall'] == 0 || $row['user'] == 0)
+				if($query_result != false)
 				{
-					echo "Failed to query queue size";
-					exit();
+					$row = mysqli_fetch_assoc($query_result) or die(mysqli_error($connection));
+					if(!$row)
+					{
+						echo "Failed to query queue size.";
+						exit();
+					}
+					// if($row['overall'] == 0 || $row['user'] == 0)
+					// {
+					// 	echo "2.Failed to query queue size";
+					// 	exit();
+					// }
+					mysqli_close($connection);
+					return $row['overall'] >= 30 || $row['user'] >= 5;
 				}
-				mysqli_close($connection);
-				return $row['overall'] >= $max_queued_attempts_overall || $row['user'] >= $max_queued_attempts_per_user;
 			}
 		}
 
@@ -86,13 +95,13 @@
 		{
 			if(!$this->readyCheckStatement)
 			{
-				$query = "select id from login_attempt_queue where last_checked > now() - interval $attempt_expiration_timeout*1000 MICROSECOND and username = '$this->username' order by id ASC limit 1";
-				$connection = mysqli_connect("localhost","root");
+				$query = "select id from login_attempt_queue where last_checked > now() - interval 5000*1000 MICROSECOND and username = '$this->username' order by id ASC limit 1"; 
+				$connection = mysqli_connect("localhost","root","pITAJI*143");
 				mysqli_select_db($connection,'prevent_brute_force');
 
 				$query_result = mysqli_query($connection,$query);
 				$this->readyCheckStatement = true;
-				$row = mysqli_fetch_array($query_result,MYSQLI_ASSOC);
+				$row = mysqli_fetch_assoc($query_result);
 				$res = $row['id']; 
 			}
 
@@ -113,26 +122,33 @@
 		{
 			if($this->isLoginValid === null)
 			{
-				$connection = mysqli_connect('localhost','root');
+				$connection = mysqli_connect('localhost','root','pITAJI*143');
 				mysqli_select_db($connection,'prevent_brute_force');
 
 				$query = "select password from users where username = '$this->username'";
 				$query_result = mysqli_query($connection,$query);
-				$res = mysqli_fetch_array($query_result,MYSQLI_ASSOC);
+				$res = mysqli_fetch_assoc($query_result);
 
 				$pwd = $res['password'];
 
 				if($pwd)
 					$this->isLoginValid = ($pwd === $this->password);
 				else
+				{
 					$this->isLoginValid = false;
+					usleep(1000*1000);
+				}
 
-				usleep($attempt_delay*1000);
-
-				$query = "delete from login_attempt_queue where id = $this->attempt_id or last_checked < now() - interval $attempt_expiration_timeout*1000";
+				// usleep(1000*1000);
+				// echo "$this->attempt_id";
+				$query = "delete from login_attempt_queue where id = $this->attempt_id and last_checked > now() - interval 5000*1000 MICROSECOND";
 				$query_result = mysqli_query($connection,$query);
+				// if($query_result)
+					// echo "haha: $query_result";
 			}
 
+			mysqli_close($connection);
+				
 			return $this->isLoginValid;
 		}
 
