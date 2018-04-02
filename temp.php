@@ -37,7 +37,7 @@
 
 		private function addToQueue()
 		{
-			$connection = mysqli_connect('localhost','root',"pITAJI*143");
+			$connection = mysqli_connect('localhost','root',"root_password");
 			if(!$connection)
 				echo "Connection to database server failed";
 			else
@@ -63,7 +63,7 @@
 
 		private function isQueueSizeExceeded()
 		{
-			$connection = mysqli_connect("localhost","root","pITAJI*143");
+			$connection = mysqli_connect("localhost","root","root_password");
 			if(!$connection)
 				echo "Connection to the database server failed!";
 			else
@@ -96,7 +96,7 @@
 			if(!$this->readyCheckStatement)
 			{
 				$query = "select id from login_attempt_queue where last_checked > now() - interval 5000*1000 MICROSECOND and username = '$this->username' order by id ASC limit 1"; 
-				$connection = mysqli_connect("localhost","root","pITAJI*143");
+				$connection = mysqli_connect("localhost","root","root_password");
 				mysqli_select_db($connection,'prevent_brute_force');
 
 				$query_result = mysqli_query($connection,$query);
@@ -113,7 +113,7 @@
 
 				mysqli_close($connection);
 
-				return $res === $this->attempt_id; 
+				return $res === $this->attempt_id; // if there are multiple login attempts made, then each login attempt will have its unique id, if this id is not equal to the id of latest attempt, false will be returned
 
 			}
 		}
@@ -122,7 +122,7 @@
 		{
 			if($this->isLoginValid === null)
 			{
-				$connection = mysqli_connect('localhost','root','pITAJI*143');
+				$connection = mysqli_connect('localhost','root','root_password');
 				mysqli_select_db($connection,'prevent_brute_force');
 
 				$query = "select password from users where username = '$this->username'";
