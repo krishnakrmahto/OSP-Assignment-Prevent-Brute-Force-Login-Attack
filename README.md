@@ -3,4 +3,4 @@ This assignment was done for ITE1008-Open Source Programming course. The solutio
 temp.php - updations are done in this document, after verifying that the changes actually do what they are supposed to, the script is moved to validate.php.
 validate_documented.php - documented code.
 
-Note that validate.php, temp.php and validate_documented.php contain the same code.
+Note that validate.php, temp.php and validate_documented.php may not contain the same code. temp.php, is however the most updated version of validate.php.
